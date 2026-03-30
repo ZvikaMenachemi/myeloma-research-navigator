@@ -611,6 +611,7 @@ let pageTokenStack  = [null]; // pageTokenStack[i] = token to fetch page i+1
 let currentPage     = 0;      // 0-indexed
 let lastNextToken   = null;   // nextPageToken from last fetch
 let translatedNCTs  = new Set();
+let translationCache = {};    // nctId → { title, summary }
 let currentStudies  = [];     // all studies from last fetch (for hospital filter)
 
 /* ═══════════════════════════════════════════════════
@@ -698,6 +699,7 @@ async function doSearch(pageToken = null) {
     const allStudies  = data.studies || [];
     lastNextToken     = data.nextPageToken || null;
     translatedNCTs.clear();
+    translationCache = {};
 
     // Client-side phase filter (API v2 doesn't support it natively)
     const selPhases = checked('phase');
@@ -800,6 +802,18 @@ function renderResults(studies) {
     return;
   }
   el.innerHTML = studies.map(cardHtml).join('');
+  // Re-apply any cached translations
+  studies.forEach(s => {
+    const nctId = s.protocolSection?.identificationModule?.nctId;
+    if (!nctId || !translationCache[nctId]) return;
+    const { title, summary } = translationCache[nctId];
+    const titleEl   = document.getElementById(`ttl-${nctId}`);
+    const summaryEl = document.getElementById(`sum-${nctId}`);
+    const btn       = document.getElementById(`bt-${nctId}`);
+    if (titleEl)   { titleEl.textContent = title; titleEl.classList.add('is-translated'); }
+    if (summaryEl && summary) summaryEl.textContent = summary;
+    if (btn)       { btn.textContent = '✓ תורגם'; btn.disabled = true; }
+  });
 }
 
 function cardHtml(study) {
@@ -1066,11 +1080,13 @@ async function translateCard(nctId) {
     titleEl.textContent   = translatedTitle;
     titleEl.classList.add('is-translated');
 
+    let translatedSum = null;
     if (summaryEl) {
-      const translatedSum   = await googleTranslate(summaryEl.textContent.slice(0, 4500));
+      translatedSum         = await googleTranslate(summaryEl.textContent.slice(0, 4500));
       summaryEl.textContent = translatedSum;
     }
 
+    translationCache[nctId] = { title: translatedTitle, summary: translatedSum };
     translatedNCTs.add(nctId);
     btn.textContent = '✓ תורגם';
   } catch (err) {
