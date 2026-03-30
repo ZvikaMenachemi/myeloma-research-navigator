@@ -297,10 +297,14 @@
     }
     .nct-id {
       font-family: 'Courier New', monospace;
-      font-size: .73rem;
-      color: var(--text-muted);
+      font-size: .78rem;
+      font-weight: 700;
+      color: #1a5276;
       direction: ltr;
+      text-decoration: none;
+      letter-spacing: .02em;
     }
+    .nct-id:hover { text-decoration: underline; }
     .card-actions { display: flex; gap: .4rem; flex-wrap: wrap; }
 
     .btn-trans {
@@ -843,6 +847,9 @@ function cardHtml(study) {
 
   return `
 <div class="trial-card" id="card-${nctId}">
+  <div style="margin-bottom:.45rem">
+    <a class="nct-id" href="https://clinicaltrials.gov/study/${nctId}" target="_blank" rel="noopener">${nctId}</a>
+  </div>
   <div class="card-top">
     <div class="trial-title" id="ttl-${nctId}">${h(title)}</div>
     <span class="status-badge s-${status}">${statusHe}</span>
@@ -864,7 +871,6 @@ function cardHtml(study) {
   </div>` : ''}
 
   <div class="card-footer">
-    <span class="nct-id">${nctId}</span>
     <div class="card-actions">
       <button class="btn-trans"   id="bt-${nctId}" onclick="translateCard('${nctId}')">תרגם לעברית</button>
       ${summary ? `<button class="btn-toggle" onclick="toggleSum('${nctId}')">הצג תקציר</button>` : ''}
